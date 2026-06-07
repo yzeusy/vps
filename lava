@@ -24,7 +24,7 @@ LP.CharacterAdded:Connect(function()
     AtualizarPersonagem()
 end)
 
-local ReGui = loadstring(game:HttpGet("https://raw.githubusercontent.com/depthso/Dear-ReGui/main/ReGui.lua"))()
+local ReGui = loadstring(game:HttpGet("https://api.lithium.wtf/misc/regui"))()
 
 local autoCollectCoins, autoTPCollectCoins , autoTP, infJump, noclip, antiAfk
 

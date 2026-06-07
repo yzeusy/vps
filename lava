@@ -1,0 +1,190 @@
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+
+local LP = Players.LocalPlayer
+local Char, HRP, humanoid
+
+local godMode = false
+local antiLavaPart
+
+local currentSpeed = 25
+
+local function AtualizarPersonagem()
+    Char = LP.Character or LP.CharacterAdded:Wait()
+    HRP = Char:WaitForChild("HumanoidRootPart")
+    humanoid = Char:WaitForChild("Humanoid")
+    humanoid.WalkSpeed = currentSpeed
+end
+
+AtualizarPersonagem()
+LP.CharacterAdded:Connect(function()
+    task.wait(1)
+    AtualizarPersonagem()
+end)
+
+local ReGui = loadstring(game:HttpGet("https://raw.githubusercontent.com/depthso/Dear-ReGui/main/ReGui.lua"))()
+
+local autoCollectCoins, autoTPCollectCoins , autoTP, infJump, noclip, antiAfk
+
+local UI = ReGui:TabsWindow({
+    Title = "The Floor is Lava - v4",
+    Size = UDim2.fromOffset(250, 280),
+    Position = UDim2.fromOffset(100, 100),
+})
+
+-- ===============================
+local TabHome = UI:CreateTab({ Name = "🏠 Home" })
+
+TabHome:Label({ Text = "🤑 Auto Farm:", Size = 18 })
+
+TabHome:Checkbox({
+    Label = "Collect 💰/💎",
+    Value = false,
+    Callback = function(_, v)
+        autoTP = v
+    end
+})
+
+TabHome:Separator()
+
+-- ===============================
+TabHome:Label({ Text = "🏃‍♂️ Movement:", Size = 18 })
+
+local wsGroup = TabHome:Group({ Label = "WalkSpeed" })
+
+local wsSlider = wsGroup:SliderInt({
+    Label = " ",
+    Minimum = 16,
+    Maximum = 100,
+    Value = currentSpeed,
+    Width = 80,
+    Callback = function(_, v)
+        currentSpeed = v
+        if humanoid then
+            humanoid.WalkSpeed = v
+        end
+    end
+})
+
+wsGroup:Button({
+    Text = "🔄 Reset",
+    Callback = function()
+        currentSpeed = 25
+        if humanoid then
+            humanoid.WalkSpeed = currentSpeed
+        end
+        wsSlider:SetValue(currentSpeed)
+    end
+})
+
+TabHome:Separator()
+
+-- ===============================
+TabHome:Label({ Text = "⭐ Specials:", Size = 18 })
+
+TabHome:Checkbox({
+    Label = "Infinite jump",
+    Value = false,
+    Callback = function(_, v)
+        infJump = v
+    end
+})
+
+TabHome:Checkbox({
+    Label = "Noclip",
+    Value = false,
+    Callback = function(_, v)
+        noclip = v
+    end
+})
+
+TabHome:Checkbox({
+    Label = "Hover Mode",
+    Value = false,
+    Callback = function(_, v)
+        godMode = v
+    end
+})
+
+TabHome:Checkbox({
+    Label = "Anti AFK",
+    Value = true,
+    Callback = function(_, v)
+        antiAfk = v
+    end
+})
+
+-- ===============================
+UIS.JumpRequest:Connect(function()
+    if infJump and LP.Character and LP.Character:FindFirstChild("Humanoid") then
+        LP.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+RunService.Stepped:Connect(function()
+    if noclip and LP.Character then
+        for _, part in ipairs(LP.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+LP.Idled:Connect(function()
+    if antiAfk then
+        local VirtualUser = game:GetService("VirtualUser")
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if autoTP and workspace:FindFirstChild("CurrentMap") and LP.Character then
+        local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        for _, map in ipairs(workspace.CurrentMap:GetChildren()) do
+            if map:FindFirstChild("Coins") then
+                for _, gem in ipairs(map.Coins:GetChildren()) do
+                    firetouchinterest(hrp, gem, 0)
+                    firetouchinterest(hrp, gem, 1)
+                end
+            end
+        end
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if godMode and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LP.Character.HumanoidRootPart
+        local hum = LP.Character:FindFirstChild("Humanoid")
+
+        -- cria plataforma invisível
+        if not antiLavaPart then
+            antiLavaPart = Instance.new("Part")
+            antiLavaPart.Size = Vector3.new(6,1,6)
+            antiLavaPart.Anchored = true
+            antiLavaPart.CanCollide = true
+            antiLavaPart.Transparency = 1
+            antiLavaPart.Name = "AntiLavaPlatform"
+            antiLavaPart.Parent = workspace
+        end
+
+        antiLavaPart.Position = hrp.Position - Vector3.new(0,3,0)
+
+        -- mantém vivo
+        if hum then
+            hum.Health = hum.MaxHealth
+            hum.BreakJointsOnDeath = false
+            hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+        end
+    else
+        if antiLavaPart then
+            antiLavaPart:Destroy()
+            antiLavaPart = nil
+        end
+    end
+end)
